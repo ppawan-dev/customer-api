@@ -1,10 +1,6 @@
 name: Deploy to AWS
 
 on:
-  push:
-   branches:
-     - master
-     
   workflow_dispatch: # Allow manual triggering of the workflow
 
 jobs:
@@ -13,11 +9,11 @@ jobs:
 
     steps:
       #Step 1: Download the build artifact
-      - name: spring-boot-app-jar
+      - name: Download the build artifact
         uses: actions/download-artifact@v3
         with:
-          name: spring-boot-app
-          path: build
+          name: customer-api
+          path: build/libs/*.jar
 
       #Step 2: Setup SSH key for AWS EC2 access
       - name: Set up SSH key
@@ -39,4 +35,3 @@ jobs:
           cd /home/ubuntu/app
           sudo systemctl stop customer-api.service
           sudo systemctl start customer-api.service
-          
