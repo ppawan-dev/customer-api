@@ -12,7 +12,7 @@ jobs:
       - name: Download the build artifact
         uses: actions/download-artifact@v4
         with:
-          name: customer-api
+          path: customer-api
 
       #Step 2: Setup SSH key for AWS EC2 access
       - name: Set up SSH key
