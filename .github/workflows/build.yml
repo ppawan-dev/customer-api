@@ -3,11 +3,11 @@ name: Build Pipeline
 on:
   push:
     branches:
-      - main
+      - master
       - develop
   pull_request:
     branches:
-      - main
+      - master
       - develop
       - feature/*
 
