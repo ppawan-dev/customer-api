@@ -1,6 +1,10 @@
 name: Deploy to AWS
 
 on:
+  push:
+   branches:
+     - master
+     
   workflow_dispatch: # Allow manual triggering of the workflow
 
 jobs:
@@ -35,3 +39,4 @@ jobs:
           cd /home/ubuntu/app
           sudo systemctl stop customer-api.service
           sudo systemctl start customer-api.service
+          
