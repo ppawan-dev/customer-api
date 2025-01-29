@@ -9,10 +9,10 @@ jobs:
 
     steps:
       #Step 1: Download the build artifact
-      - name: spring-boot-app-jar
+      - name: Download the build artifact
         uses: actions/download-artifact@v3
         with:
-          name: spring-boot-app
+          name: customer-api
           path: build
 
       #Step 2: Setup SSH key for AWS EC2 access
