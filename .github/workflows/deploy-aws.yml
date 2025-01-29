@@ -1,0 +1,37 @@
+name: Deploy to AWS
+
+on:
+  workflow_dispatch: # Allow manual triggering of the workflow
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      #Step 1: Download the build artifact
+      - name: spring-boot-app-jar
+        uses: actions/download-artifact@v3
+        with:
+          name: spring-boot-app
+          path: build
+
+      #Step 2: Setup SSH key for AWS EC2 access
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      #Step 3: Copy JAR file to EC2 instance
+      - name: Copy artifact to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa build/customer-api.jar ubuntu@${{ secrets.AWS_EC2_HOST}}:/home/ubuntu/app/customer-api.jar
+
+      #Step 4: Restart the spring-boot app on EC2 instance
+      - name: Restart spring boot app
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@{{ secrets.AWS_EC2_HOST }} << 'EOF'
+          cd /home/ubuntu/app
+          sudo systemctl stop customer-api.service
+          sudo systemctl start customer-api.service
