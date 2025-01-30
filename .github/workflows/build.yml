@@ -3,11 +3,11 @@ name: Build Pipeline
 on:
   push:
     branches:
-      - main
+      - master
       - develop
   pull_request:
     branches:
-      - main
+      - master
       - develop
       - feature/*
 
@@ -16,31 +16,72 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Setup Java JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '17'
 
+      # Step 3: Setup gradle cache
       - name: Cache Gradle packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      # Step 4: Provide necessary permissions to gradle wrapper
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
+      # Step 5: Generate project build
       - name: Build with Gradle
         run: ./gradlew clean build
 
+      # Step 6: Upload the build artifact
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: customer-api
-          path: build/libs/*.jar
+          path: build/libs/customer-api-0.0.1-SNAPSHOT.jar
+
+  deploy:
+    name: Deploy to AWS EC2
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      #Step 1: Download the build artifact
+      - name: Download the build artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: ./build
+
+      # TODO: Temporary step for debug purpose. To be removed later.
+      - name: List files
+        run: |
+          ls -la /home/runner/work/customer-api/customer-api/build/customer-api
+
+      #Step 2: Setup SSH key for AWS EC2 access
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      #Step 3: Copy JAR file to EC2 instance
+      - name: Copy artifact to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa /home/runner/work/customer-api/customer-api/build/customer-api/customer-api-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.AWS_EC2_HOST }}:/home/ubuntu/app/
+
+      #Step 4: Restart the spring-boot app on EC2 instance
+      - name: Restart spring boot app
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} "sudo systemctl restart customer-api.service"
