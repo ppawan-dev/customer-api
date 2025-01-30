@@ -26,7 +26,7 @@ jobs:
           java-version: '17'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
@@ -44,3 +44,40 @@ jobs:
         with:
           name: customer-api
           path: build/libs/customer-api-0.0.1-SNAPSHOT.jar
+
+  deploy:
+    name: Deploy to AWS EC2
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      #Step 1: Download the build artifact
+      - name: Download the build artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: ./build
+
+      - name: List files
+        run: |
+          ls -la /home/runner/work/customer-api/customer-api/build/customer-api
+
+      #Step 2: Setup SSH key for AWS EC2 access
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      #Step 3: Copy JAR file to EC2 instance
+      - name: Copy artifact to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa /home/runner/work/customer-api/customer-api/build/customer-api/customer-api-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.AWS_EC2_HOST }}:/home/ubuntu/app/
+          scp -i ~/.ssh/id_rsa /etc/systemd/system/customer-api.service ubuntu@${{ secrets.AWS_EC2_HOST }}:/etc/systemd/system/
+
+      #Step 4: Restart the spring-boot app on EC2 instance
+      - name: Restart spring boot app
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@{{ secrets.AWS_EC2_HOST }} << 'EOF'
+          cd /home/ubuntu/app
+          sudo systemctl restart customer-api.service
