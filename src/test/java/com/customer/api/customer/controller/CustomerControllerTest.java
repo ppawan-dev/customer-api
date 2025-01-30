@@ -50,6 +50,24 @@ public class CustomerControllerTest {
     }
 
     @Test
+    public void testAddCustomer_InvalidAge_InvalidDate() throws Exception {
+        Customer mockCustomer = new Customer();
+        mockCustomer.setId(1);
+        mockCustomer.setName("Spider man");
+        mockCustomer.setAge(12);
+        mockCustomer.setDob(LocalDate.of(2099, 11, 12));
+
+        when(customerService.addCustomer(mockCustomer)).thenReturn(mockCustomer);
+
+        mockMvc.perform(post("/customer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mockCustomer)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.age").value("Age must be at least 18"))
+                .andExpect(jsonPath("$.dob").value("Date must be in the past or present"));
+    }
+
+    @Test
     public void testGetCustomer() {
         Customer mockCustomer = new Customer();
         mockCustomer.setId(1);
@@ -63,6 +81,24 @@ public class CustomerControllerTest {
             mockMvc.perform(get("/customer/1"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1L));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testGetCustomer_NegativeID() {
+        Customer mockCustomer = new Customer();
+        mockCustomer.setId(-1);
+        mockCustomer.setName("Spider man");
+        mockCustomer.setAge(22);
+        mockCustomer.setDob(LocalDate.of(1990, 11, 12));
+
+        when(customerService.getCustomer(mockCustomer.getId())).thenReturn(Optional.of(mockCustomer));
+
+        try {
+            mockMvc.perform(get("/customer/1"))
+                    .andExpect(status().isNotFound());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -88,11 +124,11 @@ public class CustomerControllerTest {
 
     @Test
     public void testGetCustomers() {
-        Customer mockCustomerSpiderman = new Customer();
-        mockCustomerSpiderman.setId(1);
-        mockCustomerSpiderman.setName("Spider man");
-        mockCustomerSpiderman.setAge(22);
-        mockCustomerSpiderman.setDob(LocalDate.of(1990, 11, 12));
+        Customer mockCustomerSpiderMan = new Customer();
+        mockCustomerSpiderMan.setId(1);
+        mockCustomerSpiderMan.setName("Spider man");
+        mockCustomerSpiderMan.setAge(22);
+        mockCustomerSpiderMan.setDob(LocalDate.of(1990, 11, 12));
 
         Customer mockCustomerSuperman = new Customer();
         mockCustomerSuperman.setId(2);
@@ -101,7 +137,7 @@ public class CustomerControllerTest {
         mockCustomerSuperman.setDob(LocalDate.of(1992, 11, 12));
 
         ArrayList<Customer> mockCustomers = new ArrayList<>();
-        mockCustomers.add(mockCustomerSpiderman);
+        mockCustomers.add(mockCustomerSpiderMan);
         mockCustomers.add(mockCustomerSuperman);
 
         when(customerService.getAllCustomers()).thenReturn(mockCustomers);

@@ -10,23 +10,26 @@ jobs:
     steps:
       #Step 1: Download the build artifact
       - name: Download the build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: customer-api
-          path: build/libs/*.jar
+        uses: actions/download-artifact@v4
+#        with:
+#          path: customer-api/
 
       #Step 2: Setup SSH key for AWS EC2 access
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.AWS_EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
 
+      # - name: List directory
+      #   id: locate-artifact
+      #   run: find / -name '*.jar'
+      
       #Step 3: Copy JAR file to EC2 instance
       - name: Copy artifact to EC2
         run: |
-          scp -i ~/.ssh/id_rsa build/customer-api.jar ubuntu@${{ secrets.AWS_EC2_HOST}}:/home/ubuntu/app/customer-api.jar
+          scp -i ~/.ssh/id_rsa customer-api-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.AWS_EC2_HOST}}:/home/ubuntu/app/customer-api-0.0.1-SNAPSHOT.jar
 
       #Step 4: Restart the spring-boot app on EC2 instance
       - name: Restart spring boot app
