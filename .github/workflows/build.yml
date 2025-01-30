@@ -77,4 +77,4 @@ jobs:
       #Step 4: Restart the spring-boot app on EC2 instance
       - name: Restart spring boot app
         run: |
-          ssh ubuntu@${{ secrets.AWS_EC2_HOST }} "sudo systemctl restart customer-api.service"
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} "sudo systemctl restart customer-api.service"
