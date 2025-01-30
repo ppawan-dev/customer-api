@@ -35,7 +35,22 @@ public class CustomerServiceTest {
         Customer result = customerService.addCustomer(mockCustomer);
 
         assertEquals(mockCustomer.getName(), result.getName());
-        assertTrue(null != String.valueOf(result.getId()), "Customer ID is null");
+        assertNotNull(String.valueOf(result.getId()), "Customer ID is null");
+    }
+
+    @Test
+    public void testAddCustomer_InvalidAge_InvalidDate() {
+        Customer mockCustomer = new Customer();
+        mockCustomer.setAge(15);
+        mockCustomer.setName("Jack Sparrow");
+        mockCustomer.setDob(LocalDate.of(2099, 2, 25));
+
+        when(customerRepository.save(mockCustomer)).thenReturn(mockCustomer);
+
+        Customer result = customerService.addCustomer(mockCustomer);
+
+        assertEquals(mockCustomer.getName(), result.getName());
+        assertNotNull(String.valueOf(result.getId()), "Customer ID is null");
     }
 
     @Test
