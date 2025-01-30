@@ -3,25 +3,16 @@ name: Deploy to AWS
 on:
   workflow_dispatch: # Allow manual triggering of the workflow
 
-env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       #Step 1: Download the build artifact
-      - name: List Artifacts (For Debugging)
-        run: |
-          echo "Listing available artifacts:"
-          gh run view --log --json artifacts
-
       - name: Download the build artifact
         uses: actions/download-artifact@v4
-        with:
-          path: customer-api/
+#        with:
+#          path: customer-api/
 
       #Step 2: Setup SSH key for AWS EC2 access
       - name: Set up SSH key
